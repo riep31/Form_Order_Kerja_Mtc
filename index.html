@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Form Order Kerja - PT. DAGSAP ENDURA EATORE</title>
+    <!-- PDF Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -158,11 +161,16 @@
             cursor: pointer;
             font-size: 14px;
             margin: 0 5px;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
         }
 
         .btn:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .btn-success {
@@ -173,17 +181,13 @@
             background-color: #1e7e34;
         }
 
-        .btn:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-            opacity: 0.6;
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
         }
 
-        .loading-indicator {
-            display: none;
-            margin-top: 10px;
-            color: #007bff;
-            font-style: italic;
+        .btn-warning:hover {
+            background-color: #e0a800;
         }
 
         .image-container {
@@ -295,22 +299,46 @@
             word-break: break-all;
         }
 
-        .pdf-page {
-            min-height: 100vh;
-            page-break-after: always;
-            padding: 20px;
-        }
-
-        .pdf-page:last-child {
-            page-break-after: avoid;
-        }
-
-        .pdf-page.hide-if-no-images {
-            display: block;
-        }
-
-        .pdf-page.hide-if-no-images.no-images {
+        /* Loading spinner for PDF export */
+        .loading-spinner {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+
+        .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-text {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         @media print {
@@ -325,8 +353,8 @@
                 margin: 0;
                 padding: 0;
             }
-            .buttons, .info-section, .loading-indicator {
-                display: none !important;
+            .buttons, .info-section {
+                display: none;
             }
             
             .body-table tr:nth-child(even) {
@@ -343,179 +371,180 @@
             }
         }
     </style>
-    <!-- Add CDN scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <div class="spinner-text">Mengekspor ke PDF...<br>Mohon tunggu...</div>
+    </div>
+
     <div class="container">
         <!-- Form Preview - Halaman 1 -->
         <div id="printArea">
-            <div class="pdf-page" id="page1">
-                <div class="table-title"></div>
-                <table class="header-table">
-                    <tbody>
-                        <tr>
-                            <td rowspan="5" style="text-align: center; vertical-align: middle;">
-                                 <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYyanHkNjy-MEGWx-yRWA8XiFF9HbWiLoGFY9HRkEpuBXKYGjxU_TMW2dK4ONcqKA4tg&usqp=CAU' width='100' height='60' style='margin-right: 10px; padding: 1px;'>
-                                 <div class="company-name">PT.DAGSAP ENDURA EATORE</div>
-                            </td>
-                            <td rowspan="5" style="text-align: center; vertical-align: middle; font-size: 22px; font-weight: bold; color: #333;">
-                                FORM ORDER KERJA (OK)
-                            </td>
-                            <td>Nomor Dokumen</td>
-                            <td>DEE-YG-SX-XX-003-13</td>
-                        </tr>
-                        <tr>
-                            <td>Status Dokumen</td>
-                            <td>Dikendalikan</td>
-                        </tr>
-                        <tr>
-                            <td>Revisi</td>
-                            <td>02</td>
-                        </tr>
-                        <tr>
-                            <td>Tanggal Terbit</td>
-                            <td>10 Maret 2021</td>
-                        </tr>
-                        <tr>
-                            <td>Halaman</td>
-                            <td>1 dari 3</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <div class="table-title">Detail order kerja</div>
-                <table class="body-table">
-                    <tbody>
-                        <tr>
-                            <td class="field-name">No. OK</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Department</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Nama</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Nama Sifat Pekerjaan</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Jenis Pekerjaan</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Waktu Pengerjaan</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr class="long-text-row">
-                            <td class="field-name">Rincian Pekerjaan</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr class="long-text-row">
-                            <td class="field-name">Koreksi</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr class="long-text-row">
-                            <td class="field-name">Root Cause Analysis</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr class="long-text-row">
-                            <td class="field-name">Corrective Action</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Target Selesai</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Actual Selesai</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">Status</td>
-                            <td class="attr-display" data-value="-"></td>
-                        </tr>
-                    </tbody>
-                </table>
-              
-                <div class="table-title">Checklist Verifikasi</div>
-                <table class="body-table">
-                    <tbody>
-                        <tr>
-                            <td style="width: 50px; text-align: center; vertical-align: middle;">
-                                <input type="checkbox" id="check1" class="dynamic-checkbox" disabled>
-                            </td>
-                            <td>
-                                <label for="check1" class="checkbox-label">Cek kebersihan mesin dan area mesin oleh QC</label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="width: 50px; text-align: center; vertical-align: middle;">
-                                <input type="checkbox" id="check2" class="dynamic-checkbox" disabled>
-                            </td>
-                            <td>
-                                <label for="check2" class="checkbox-label">Cek kelengkapan mesin dan kelengkapan alat oleh operator produksi dan teknisi</label>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="width: 50px; text-align: center; vertical-align: middle;">
-                                <input type="checkbox" id="check3" class="dynamic-checkbox" disabled>
-                            </td>
-                            <td>
-                                <label for="check3" class="checkbox-label">Serah terima mesin oleh teknisi kepada operator produksi</label>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="table-title"></div>
+            <table class="header-table">
+                <tbody>
+                    <tr>
+                        <td rowspan="5" style="text-align: center; vertical-align: middle;">
+                             <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYyanHkNjy-MEGWx-yRWA8XiFF9HbWiLoGFY9HRkEpuBXKYGjxU_TMW2dK4ONcqKA4tg&usqp=CAU' width='100' height='60' style='margin-right: 10px; padding: 1px;'>
+                             <div class="company-name">PT.DAGSAP ENDURA EATORE</div>
+                        </td>
+                        <td rowspan="5" style="text-align: center; vertical-align: middle; font-size: 22px; font-weight: bold; color: #333;">
+                            FORM ORDER KERJA (OK)
+                        </td>
+                        <td>Nomor Dokumen</td>
+                        <td>DEE-YG-SX-XX-003-13</td>
+                    </tr>
+                    <tr>
+                        <td>Status Dokumen</td>
+                        <td>Dikendalikan</td>
+                    </tr>
+                    <tr>
+                        <td>Revisi</td>
+                        <td>02</td>
+                    </tr>
+                    <tr>
+                        <td>Tanggal Terbit</td>
+                        <td>10 Maret 2021</td>
+                    </tr>
+                    <tr>
+                        <td>Halaman</td>
+                        <td>1 dari 3</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="table-title">Detail order kerja</div>
+            <table class="body-table">
+                <tbody>
+                    <tr>
+                        <td class="field-name">No. OK</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Department</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Nama</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Nama Sifat Pekerjaan</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Jenis Pekerjaan</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Waktu Pengerjaan</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr class="long-text-row">
+                        <td class="field-name">Rincian Pekerjaan</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr class="long-text-row">
+                        <td class="field-name">Koreksi</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr class="long-text-row">
+                        <td class="field-name">Root Cause Analysis</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr class="long-text-row">
+                        <td class="field-name">Corrective Action</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Target Selesai</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Actual Selesai</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Status</td>
+                        <td class="attr-display" data-value="-"></td>
+                    </tr>
+                </tbody>
+            </table>
+          
+            <div class="table-title">Checklist Verifikasi</div>
+            <table class="body-table">
+                <tbody>
+                    <tr>
+                        <td style="width: 50px; text-align: center; vertical-align: middle;">
+                            <input type="checkbox" id="check1" class="dynamic-checkbox" disabled>
+                        </td>
+                        <td>
+                            <label for="check1" class="checkbox-label">Cek kebersihan mesin dan area mesin oleh QC</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50px; text-align: center; vertical-align: middle;">
+                            <input type="checkbox" id="check2" class="dynamic-checkbox" disabled>
+                        </td>
+                        <td>
+                            <label for="check2" class="checkbox-label">Cek kelengkapan mesin dan kelengkapan alat oleh operator produksi dan teknisi</label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50px; text-align: center; vertical-align: middle;">
+                            <input type="checkbox" id="check3" class="dynamic-checkbox" disabled>
+                        </td>
+                        <td>
+                            <label for="check3" class="checkbox-label">Serah terima mesin oleh teknisi kepada operator produksi</label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
-                <table class="footer-table">
-                    <tbody>
-                        <tr>
-                            <td>Diminta Oleh</td>
-                            <td>Menyetujui</td>
-                            <td>Pelaksana</td>
-                            <td>Diketahui</td>
-                            <td>Diterima Oleh</td>
-                        </tr>
-                        <tr class="signature-row">
-                            <td>
-                                <img id="qr1" class="qr-code" alt="QR Code Diminta Oleh">
-                            </td>
-                            <td>
-                                <img id="qr2" class="qr-code" alt="QR Code Menyetujui">
-                            </td>
-                            <td>
-                                <img id="qr3" class="qr-code" alt="QR Code Pelaksana">
-                            </td>
-                            <td>
-                                <img id="qr4" class="qr-code" alt="QR Code Diketahui">
-                            </td>
-                            <td>
-                                <img id="qr5" class="qr-code" alt="QR Code Diterima Oleh">
-                            </td>
-                        </tr>
-                        <tr class="name-row">
-                            <td id="name1">-<br>-</td>
-                            <td id="name2">-<br>-</td>
-                            <td id="name3">-<br>-</td>
-                            <td id="name4">-<br>-</td>
-                            <td id="name5">-<br>-</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table class="footer-table">
+                <tbody>
+                    <tr>
+                        <td>Diminta Oleh</td>
+                        <td>Menyetujui</td>
+                        <td>Pelaksana</td>
+                        <td>Diketahui</td>
+                        <td>Diterima Oleh</td>
+                    </tr>
+                    <tr class="signature-row">
+                        <td>
+                            <img id="qr1" class="qr-code" alt="QR Code Diminta Oleh">
+                        </td>
+                        <td>
+                            <img id="qr2" class="qr-code" alt="QR Code Menyetujui">
+                        </td>
+                        <td>
+                            <img id="qr3" class="qr-code" alt="QR Code Pelaksana">
+                        </td>
+                        <td>
+                            <img id="qr4" class="qr-code" alt="QR Code Diketahui">
+                        </td>
+                        <td>
+                            <img id="qr5" class="qr-code" alt="QR Code Diterima Oleh">
+                        </td>
+                    </tr>
+                    <tr class="name-row">
+                        <td id="name1">-<br>-</td>
+                        <td id="name2">-<br>-</td>
+                        <td id="name3">-<br>-</td>
+                        <td id="name4">-<br>-</td>
+                        <td id="name5">-<br>-</td>
+                    </tr>
+                </tbody>
+            </table>
 
             <!-- Halaman 2: Gambar 1 dan 2 -->
-            <div class="pdf-page hide-if-no-images" id="page2">
+            <div class="page-break">
                 <div class="table-title">Foto Rincian Pekerjaan - Halaman 2</div>
                 <table class="body-table">
                     <tbody>
-                        <tr id="image1-row">
+                        <tr>
                             <td class="field-name">Lampiran Foto 1</td>
                             <td style="text-align: center; padding: 20px;">
                                 <div id="image1-container" class="image-container">
@@ -528,7 +557,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr id="image2-row">
+                        <tr>
                             <td class="field-name">Lampiran Foto  2</td>
                             <td style="text-align: center; padding: 20px;">
                                 <div id="image2-container" class="image-container">
@@ -546,11 +575,11 @@
             </div>
 
             <!-- Halaman 3: Gambar 3 dan 4 -->
-            <div class="pdf-page hide-if-no-images" id="page3">
+            <div class="page-break">
                 <div class="table-title">Foto Rincian Pekerjaan - Halaman 3</div>
                 <table class="body-table">
                     <tbody>
-                        <tr id="image3-row">
+                        <tr>
                             <td class="field-name">Foto Sudah Dikerjakan</td>
                             <td style="text-align: center; padding: 20px;">
                                 <div id="image3-container" class="image-container">
@@ -563,7 +592,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr id="image4-row">
+                        <tr>
                             <td class="field-name">Foto Cek Kebersihan</td>
                             <td style="text-align: center; padding: 20px;">
                                 <div id="image4-container" class="image-container">
@@ -581,18 +610,181 @@
             </div>
         </div>
 
-        <!-- Buttons -->
+        <!-- Enhanced Buttons -->
         <div class="buttons">
-            <button class="btn" onclick="window.print()">Print Form</button>
-            <button class="btn btn-success" id="pdfBtn" onclick="exportToPDF()">Export PDF</button>
-        </div>
-        
-        <div class="loading-indicator" id="loadingIndicator">
-            Sedang membuat PDF... Mohon tunggu...
+            <button class="btn" onclick="printForm()">
+                📄 Print Form
+            </button>
+            <button class="btn btn-success" onclick="exportToPDF()">
+                📁 Export PDF
+            </button>
+            <button class="btn btn-warning" onclick="exportToPDF(true)">
+                🖼️ Export PDF (High Quality)
+            </button>
         </div>
     </div>
 
     <script>
+        // Get URL parameters function
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name) || '';
+        }
+
+        // Enhanced Print Function
+        function printForm() {
+            // Hide buttons and other non-printable elements
+            const buttons = document.querySelector('.buttons');
+            const originalDisplay = buttons.style.display;
+            buttons.style.display = 'none';
+            
+            // Optional: Add print-specific styling
+            document.body.classList.add('printing');
+            
+            // Print
+            window.print();
+            
+            // Restore elements after print
+            setTimeout(() => {
+                buttons.style.display = originalDisplay;
+                document.body.classList.remove('printing');
+            }, 1000);
+        }
+
+        // Enhanced PDF Export Function
+        function exportToPDF(highQuality = false) {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('printArea');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            if (!element) {
+                alert('Area yang akan diekspor tidak ditemukan!');
+                return;
+            }
+
+            // Show loading spinner
+            spinner.style.display = 'block';
+            
+            // Configure html2canvas options
+            const canvasOptions = {
+                scale: highQuality ? 3 : 2, // Higher scale for better quality
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                width: element.scrollWidth,
+                height: element.scrollHeight,
+                scrollX: 0,
+                scrollY: 0
+            };
+
+            html2canvas(element, canvasOptions).then(function(canvas) {
+                try {
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    // PDF dimensions (A4 in mm)
+                    const pdfWidth = 210;
+                    const pdfHeight = 297;
+                    const margin = 10; // 10mm margin
+                    const contentWidth = pdfWidth - (margin * 2);
+                    
+                    // Calculate image dimensions to fit PDF
+                    const imgWidth = contentWidth;
+                    const imgHeight = (canvas.height * contentWidth) / canvas.width;
+                    
+                    let heightLeft = imgHeight;
+                    let position = margin;
+                    let pageCount = 1;
+                    
+                    // Add first page
+                    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                    heightLeft -= (pdfHeight - margin * 2);
+                    
+                    // Add additional pages if content is longer than one page
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight + margin;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                        heightLeft -= (pdfHeight - margin * 2);
+                        pageCount++;
+                    }
+                    
+                    // Generate filename with timestamp
+                    const now = new Date();
+                    const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
+                    const noOK = getUrlParameter('noOK') || 'unknown';
+                    const qualitySuffix = highQuality ? '_HQ' : '';
+                    const fileName = `Form_Order_Kerja_${noOK}_${timestamp}${qualitySuffix}.pdf`;
+                    
+                    // Save the PDF
+                    pdf.save(fileName);
+                    
+                    // Show success message
+                    showNotification(`PDF berhasil diekspor dengan ${pageCount} halaman!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error creating PDF:', error);
+                    showNotification('Gagal mengekspor PDF: ' + error.message, 'error');
+                } finally {
+                    // Hide loading spinner
+                    spinner.style.display = 'none';
+                }
+            }).catch(function(error) {
+                console.error('Error capturing canvas:', error);
+                showNotification('Gagal menangkap gambar: ' + error.message, 'error');
+                spinner.style.display = 'none';
+            });
+        }
+
+        // Notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 5px;
+                color: white;
+                font-weight: bold;
+                z-index: 10000;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                transition: all 0.3s ease;
+            `;
+            
+            switch(type) {
+                case 'success':
+                    notification.style.backgroundColor = '#28a745';
+                    break;
+                case 'error':
+                    notification.style.backgroundColor = '#dc3545';
+                    break;
+                case 'warning':
+                    notification.style.backgroundColor = '#ffc107';
+                    notification.style.color = '#212529';
+                    break;
+                default:
+                    notification.style.backgroundColor = '#007bff';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Original form data loading logic
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             
@@ -742,7 +934,7 @@
                 }
             }
 
-            // Function to handle image loading
+            // Function to handle image loading with error handling
             function setupImage(imageId, imageUrl) {
                 if (!imageUrl) return;
                 
@@ -761,10 +953,6 @@
                     imgElement.onload = function() {
                         containerElement.classList.remove('loading');
                         containerElement.classList.add('has-image');
-                        
-                        // Mark that this image is available
-                        imgElement.setAttribute('data-image-loaded', 'true');
-                        checkAndHideEmptyPages();
                     };
                     
                     imgElement.onerror = function() {
@@ -774,116 +962,12 @@
                             bgElement.style.backgroundImage = `url('${actualUrl}')`;
                             bgElement.classList.add('has-bg-image');
                             containerElement.style.display = 'none';
-                            
-                            // Mark that this image is available (via background)
-                            imgElement.setAttribute('data-image-loaded', 'true');
-                        } else {
-                            // Mark that this image failed to load
-                            imgElement.setAttribute('data-image-loaded', 'false');
                         }
-                        checkAndHideEmptyPages();
                     };
                     
                     imgElement.src = actualUrl;
-                } else {
-                    checkAndHideEmptyPages();
                 }
             }
-
-            // Function to check if pages should be hidden
-            function checkAndHideEmptyPages() {
-                // Check page 2 (images 1 and 2)
-                const image1Loaded = document.getElementById('image1')?.getAttribute('data-image-loaded') === 'true';
-                const image2Loaded = document.getElementById('image2')?.getAttribute('data-image-loaded') === 'true';
-                const page2 = document.getElementById('page2');
-                
-                if (!image1Loaded && !image2Loaded) {
-                    page2?.classList.add('no-images');
-                } else {
-                    page2?.classList.remove('no-images');
-                    
-                    // Hide individual rows if no image
-                    if (!image1Loaded) {
-                        const row1 = document.getElementById('image1-row');
-                        if (row1) row1.style.display = 'none';
-                    }
-                    if (!image2Loaded) {
-                        const row2 = document.getElementById('image2-row');
-                        if (row2) row2.style.display = 'none';
-                    }
-                }
-                
-                // Check page 3 (images 3 and 4)
-                const image3Loaded = document.getElementById('image3')?.getAttribute('data-image-loaded') === 'true';
-                const image4Loaded = document.getElementById('image4')?.getAttribute('data-image-loaded') === 'true';
-                const page3 = document.getElementById('page3');
-                
-                if (!image3Loaded && !image4Loaded) {
-                    page3?.classList.add('no-images');
-                } else {
-                    page3?.classList.remove('no-images');
-                    
-                    // Hide individual rows if no image
-                    if (!image3Loaded) {
-                        const row3 = document.getElementById('image3-row');
-                        if (row3) row3.style.display = 'none';
-                    }
-                    if (!image4Loaded) {
-                        const row4 = document.getElementById('image4-row');
-                        if (row4) row4.style.display = 'none';
-                    }
-                }
-                
-                // Update page numbering dynamically
-                updatePageNumbers();
-            }
-
-            // Function to update page numbers based on visible pages
-            function updatePageNumbers() {
-                const page2Visible = !document.getElementById('page2')?.classList.contains('no-images');
-                const page3Visible = !document.getElementById('page3')?.classList.contains('no-images');
-                
-                let totalPages = 1; // Page 1 is always visible
-                if (page2Visible) totalPages++;
-                if (page3Visible) totalPages++;
-                
-                // Update the page number in header table
-                const headerTable = document.querySelector('.header-table tbody');
-                if (headerTable) {
-                    const rows = headerTable.querySelectorAll('tr');
-                    rows.forEach(row => {
-                        const cells = row.querySelectorAll('td');
-                        cells.forEach(cell => {
-                            if (cell.textContent.trim() === 'Halaman' && cell.nextElementSibling) {
-                                cell.nextElementSibling.textContent = `1 dari ${totalPages}`;
-                            }
-                            }
-        });
-    </script>
-</body>
-</html>
-                    });
-                }
-                
-                console.log(`Total visible pages: ${totalPages}`);
-            }
-
-            // Initialize image loading check
-            function initializeImageCheck() {
-                // Set default state for all images
-                ['image1', 'image2', 'image3', 'image4'].forEach(imageId => {
-                    const imgElement = document.getElementById(imageId);
-                    if (imgElement) {
-                        imgElement.setAttribute('data-image-loaded', 'false');
-                    }
-                });
-                
-                // Initial check
-                checkAndHideEmptyPages();
-            }
-
-            // Call initialization
-            initializeImageCheck();
 
             // Setup all images
             setupImage('image1', params.image1);
@@ -895,4 +979,271 @@
             const dataElements = document.querySelectorAll('.attr-display');
             const paramKeys = ['noOK', 'department', 'nama', 'namaKerja', 'jenisKerja', 'waktuKerja', 'rincianKerja', 'koreksi', 'rootCause', 'correctiveAction', 'targetSelesai', 'actualSelesai', 'status'];
             
-            data
+            dataElements.forEach((element, index) => {
+                if (paramKeys[index] && params[paramKeys[index]]) {
+                    const decodedValue = decodeURIComponent(params[paramKeys[index]]);
+                    element.setAttribute('data-value', decodedValue);
+                    
+                    if (paramKeys[index] === 'status') {
+                        const status = decodedValue.toLowerCase();
+                        if (status.includes('selesai') || status.includes('completed')) {
+                            element.classList.add('status-completed');
+                        } else if (status.includes('progress') || status.includes('proses')) {
+                            element.classList.add('status-in-progress');
+                        } else if (status.includes('pending') || status.includes('tunggu')) {
+                            element.classList.add('status-pending');
+                        }
+                    }
+                }
+            });
+        })();
+
+        // Enhanced AppSheet Integration Helper Functions
+        window.AppSheetHelpers = {
+            // Function to format name parameter for AppSheet
+            formatNameParam: function(fullName, position) {
+                return `${fullName} - ${position}`;
+            },
+            
+            // Function to create URL with all parameters
+            createFormURL: function(data) {
+                const baseUrl = window.location.origin + window.location.pathname;
+                const params = new URLSearchParams();
+                
+                // Add all possible parameters
+                Object.keys(data).forEach(key => {
+                    if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
+                        params.append(key, data[key]);
+                    }
+                });
+                
+                return `${baseUrl}?${params.toString()}`;
+            },
+            
+            // Function to validate name format
+            validateNameFormat: function(nameString) {
+                const parts = nameString.split(' - ');
+                return parts.length >= 2 ? {
+                    valid: true,
+                    name: parts[0],
+                    position: parts[1]
+                } : {
+                    valid: false,
+                    error: 'Format harus: "Nama - Jabatan"'
+                };
+            },
+
+            // Function to get current form data for AppSheet integration
+            getCurrentFormData: function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const data = {};
+                
+                // Get all current parameters
+                for (let [key, value] of urlParams) {
+                    data[key] = value;
+                }
+                
+                return data;
+            },
+
+            // Function to validate form completeness
+            validateFormCompletion: function() {
+                const requiredFields = ['noOK', 'department', 'nama', 'namaKerja', 'jenisKerja'];
+                const currentData = this.getCurrentFormData();
+                const missing = [];
+                
+                requiredFields.forEach(field => {
+                    if (!currentData[field] || currentData[field] === '-' || currentData[field] === '') {
+                        missing.push(field);
+                    }
+                });
+                
+                return {
+                    isComplete: missing.length === 0,
+                    missingFields: missing
+                };
+            }
+        };
+
+        // Additional utility functions for enhanced functionality
+        window.FormUtils = {
+            // Function to get form metadata
+            getFormMetadata: function() {
+                return {
+                    title: 'Form Order Kerja - PT. DAGSAP ENDURA EATORE',
+                    version: '1.1',
+                    lastModified: new Date().toISOString(),
+                    totalPages: 3,
+                    documentNumber: 'DEE-YG-SX-XX-003-13'
+                };
+            },
+
+            // Function to generate print preview
+            showPrintPreview: function() {
+                const printWindow = window.open('', '_blank');
+                const printContent = document.getElementById('printArea').outerHTML;
+                
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Print Preview - Form Order Kerja</title>
+                        <style>
+                            ${document.querySelector('style').innerHTML}
+                            body { background: white; margin: 0; padding: 20px; }
+                            .buttons { display: none !important; }
+                        </style>
+                    </head>
+                    <body>
+                        ${printContent}
+                    </body>
+                    </html>
+                `);
+                
+                printWindow.document.close();
+            },
+
+            // Function to copy form URL to clipboard
+            copyFormURL: function() {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showNotification('URL form berhasil disalin ke clipboard!', 'success');
+                }).catch(() => {
+                    showNotification('Gagal menyalin URL. Silakan copy manual dari address bar.', 'warning');
+                });
+            }
+        };
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + P for print
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                printForm();
+            }
+            
+            // Ctrl/Cmd + S for PDF export
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                exportToPDF();
+            }
+            
+            // Ctrl/Cmd + Shift + S for high quality PDF
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                exportToPDF(true);
+            }
+        });
+
+        // Add loading state management
+        let isExporting = false;
+
+        // Override exportToPDF to prevent multiple simultaneous exports
+        const originalExportToPDF = exportToPDF;
+        exportToPDF = function(highQuality = false) {
+            if (isExporting) {
+                showNotification('Export PDF sedang berlangsung, mohon tunggu...', 'warning');
+                return;
+            }
+            
+            isExporting = true;
+            
+            // Call original function with completion callback
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('printArea');
+            const spinner = document.getElementById('loadingSpinner');
+            
+            if (!element) {
+                alert('Area yang akan diekspor tidak ditemukan!');
+                isExporting = false;
+                return;
+            }
+
+            // Show loading spinner
+            spinner.style.display = 'block';
+            
+            // Configure html2canvas options
+            const canvasOptions = {
+                scale: highQuality ? 3 : 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                width: element.scrollWidth,
+                height: element.scrollHeight,
+                scrollX: 0,
+                scrollY: 0
+            };
+
+            html2canvas(element, canvasOptions).then(function(canvas) {
+                try {
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    // PDF dimensions (A4 in mm)
+                    const pdfWidth = 210;
+                    const pdfHeight = 297;
+                    const margin = 10;
+                    const contentWidth = pdfWidth - (margin * 2);
+                    
+                    // Calculate image dimensions
+                    const imgWidth = contentWidth;
+                    const imgHeight = (canvas.height * contentWidth) / canvas.width;
+                    
+                    let heightLeft = imgHeight;
+                    let position = margin;
+                    let pageCount = 1;
+                    
+                    // Add first page
+                    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                    heightLeft -= (pdfHeight - margin * 2);
+                    
+                    // Add additional pages if needed
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight + margin;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                        heightLeft -= (pdfHeight - margin * 2);
+                        pageCount++;
+                    }
+                    
+                    // Generate filename
+                    const now = new Date();
+                    const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '');
+                    const noOK = getUrlParameter('noOK') || 'unknown';
+                    const qualitySuffix = highQuality ? '_HQ' : '';
+                    const fileName = `Form_Order_Kerja_${noOK}_${timestamp}${qualitySuffix}.pdf`;
+                    
+                    // Save PDF
+                    pdf.save(fileName);
+                    
+                    // Show success message
+                    showNotification(`PDF berhasil diekspor dengan ${pageCount} halaman!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error creating PDF:', error);
+                    showNotification('Gagal mengekspor PDF: ' + error.message, 'error');
+                } finally {
+                    spinner.style.display = 'none';
+                    isExporting = false;
+                }
+            }).catch(function(error) {
+                console.error('Error capturing canvas:', error);
+                showNotification('Gagal menangkap gambar: ' + error.message, 'error');
+                spinner.style.display = 'none';
+                isExporting = false;
+            });
+        };
+
+        // Show form load success
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if form has data
+            const hasData = getUrlParameter('noOK') && getUrlParameter('noOK') !== '-';
+            if (hasData) {
+                setTimeout(() => {
+                    showNotification('Form berhasil dimuat dengan data!', 'success');
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
